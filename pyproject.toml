@@ -1,0 +1,25 @@
+[project]
+name = "example-skills"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "konnase", email = "lqp19940918@163.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "langchain<1.0.0",
+    "langchain-community<1.0.0",
+    "langchain-openai<1.0.0",
+    "pyyaml>=6.0.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.20,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.14.10",
+]

@@ -1,0 +1,5 @@
+{
+    "km_to_miles": 0.621371,
+    "kg_to_lbs": 2.20462,
+    "celsius_to_fahrenheit": "formula: (C * 9/5) + 32"
+}
