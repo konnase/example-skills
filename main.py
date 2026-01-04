@@ -1,5 +1,6 @@
 import os
 import yaml
+import subprocess
 from dotenv import load_dotenv
 from typing import List, Dict
 from langchain.agents import AgentExecutor, create_tool_calling_agent
@@ -7,9 +8,28 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 
-global_base_dir = "/mnt/liqingping/opensource/example-skills"
+global_base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # 1. Define tools that allow the agent to "use" skills by exploring the filesystem
+@tool
+def run_shell_command(command: str) -> str:
+    """Executes a shell command and returns the output. 
+    Use this to run python scripts or other system commands.
+    Make sure to use paths relative to the current directory."""
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            cwd=global_base_dir
+        )
+        if result.returncode == 0:
+            return result.stdout
+        else:
+            return f"Error: {result.stderr}"
+    except Exception as e:
+        return f"Exception occurred: {str(e)}"
 @tool
 def read_skill_file(file_path: str) -> str:
     """Reads a file from a skill directory.
@@ -80,7 +100,7 @@ def create_skill_system_prompt(skills: List[Dict]) -> str:
 
 def main():
     # Load skills
-    skills_root = "/mnt/liqingping/opensource/example-skills"
+    skills_root = global_base_dir
     available_skills = load_agent_skills(skills_root)
 
     # Initialize LLM (ChatOpenAI)
@@ -95,7 +115,7 @@ def main():
     )
 
     # Define Tools
-    tools = [read_skill_file, list_skill_contents]
+    tools = [read_skill_file, list_skill_contents, run_shell_command]
 
     # Create Prompt
     system_message = create_skill_system_prompt(available_skills)
@@ -116,7 +136,7 @@ def main():
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
     # Example Usage
-    user_input = "Can you analyze the sentiment of this text: 'The new feature is absolutely amazing and I love using it!'"
+    user_input = "计算 123 + 456"
     print(f"User: {user_input}")
 
     # Run Agent
