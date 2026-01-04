@@ -22,4 +22,4 @@ test:
 
 # 运行主程序
 run:
-	uv run python main.py
+	uv run src/example_skills/main.py

@@ -10,7 +10,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
 
-global_base_dir = os.path.dirname(os.path.abspath(__file__))
+global_base_dir = os.path.dirname(os.path.abspath(__file__)) 
+skills_root = os.path.join(global_base_dir, "skills")
 
 
 # 1. Define tools that allow the agent to "use" skills by exploring the filesystem
@@ -21,7 +22,7 @@ def run_shell_command(command: str) -> str:
     Make sure to use paths relative to the current directory."""
     try:
         result = subprocess.run(
-            command, shell=True, capture_output=True, text=True, cwd=global_base_dir
+            command, shell=True, capture_output=True, text=True, cwd=skills_root
         )
         if result.returncode == 0:
             return result.stdout
@@ -37,7 +38,7 @@ def read_skill_file(file_path: str) -> str:
     The file_path should be in the format 'skill-name/filename.md' (e.g., 'text-processor/instructions.md').
     Use this to get detailed instructions or data for a skill."""
     # Ensure we only read from the skills directory for safety in this example
-    base_dir = os.path.abspath(global_base_dir)
+    base_dir = os.path.abspath(skills_root)
     target_path = os.path.abspath(os.path.join(base_dir, file_path))
 
     if not target_path.startswith(base_dir):
@@ -55,7 +56,7 @@ def read_skill_file(file_path: str) -> str:
 @tool
 def list_skill_contents(skill_name: str) -> List[str]:
     """Lists the files available in a specific skill directory."""
-    skill_dir = os.path.join(global_base_dir, skill_name)
+    skill_dir = os.path.join(skills_root, skill_name)
     try:
         return os.listdir(skill_dir)
     except Exception as e:
@@ -100,8 +101,7 @@ def create_skill_system_prompt(skills: List[Dict]) -> str:
 
 
 def main():
-    # Load skills
-    skills_root = global_base_dir
+    # Load skills from the skills directory
     available_skills = load_agent_skills(skills_root)
 
     # Initialize LLM (ChatOpenAI)
