@@ -1,28 +1,27 @@
 import os
 import yaml
 import subprocess
+import readline  # noqa: F401
 from dotenv import load_dotenv
 from typing import List, Dict
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, AIMessage
 
 global_base_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 # 1. Define tools that allow the agent to "use" skills by exploring the filesystem
 @tool
 def run_shell_command(command: str) -> str:
-    """Executes a shell command and returns the output. 
+    """Executes a shell command and returns the output.
     Use this to run python scripts or other system commands.
     Make sure to use paths relative to the current directory."""
     try:
         result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            cwd=global_base_dir
+            command, shell=True, capture_output=True, text=True, cwd=global_base_dir
         )
         if result.returncode == 0:
             return result.stdout
@@ -30,6 +29,8 @@ def run_shell_command(command: str) -> str:
             return f"Error: {result.stderr}"
     except Exception as e:
         return f"Exception occurred: {str(e)}"
+
+
 @tool
 def read_skill_file(file_path: str) -> str:
     """Reads a file from a skill directory.
@@ -135,13 +136,33 @@ def main():
     agent = create_tool_calling_agent(llm, tools, prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-    # Example Usage
-    user_input = "计算 123 + 456"
-    print(f"User: {user_input}")
+    chat_history = []
 
-    # Run Agent
-    response = agent_executor.invoke({"input": user_input, "chat_history": []})
-    print(f"Assistant: {response['output']}")
+    print("\n--- Interactive Chat Started (Press Ctrl+C to exit) ---")
+
+    try:
+        while True:
+            user_input = input("\nUser: ")
+            if not user_input.strip():
+                continue
+
+            if user_input.lower() in ["exit", "quit"]:
+                break
+
+            # Run Agent
+            response = agent_executor.invoke(
+                {"input": user_input, "chat_history": chat_history}
+            )
+
+            output = response["output"]
+            print(f"Assistant: {output}")
+
+            # Update history
+            chat_history.append(HumanMessage(content=user_input))
+            chat_history.append(AIMessage(content=output))
+
+    except KeyboardInterrupt:
+        print("\n\nExiting chat... Goodbye!")
 
 
 if __name__ == "__main__":
